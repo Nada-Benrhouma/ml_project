@@ -2,7 +2,7 @@
 
 Usage:
     python pipeline_prefect.py --flow all
-    python pipeline_prefect.py --flow install | quality | test | prepare |
+    python pipeline_prefect.py --flow pull | install | quality | test | prepare |
                                       train | evaluate | predict | api | clean
 """
 
@@ -43,6 +43,12 @@ def run(cmd):
 
 
 # ----------------------------- Tasks ---------------------------------------
+@task(name="git-pull")
+def git_pull():
+    """Retrieve the latest code from the Git repository."""
+    run(["git", "pull"])
+
+
 @task(name="install-dependencies")
 def install_dependencies():
     """Install the packages listed in requirements.txt."""
@@ -129,6 +135,12 @@ def clean_files():
 
 
 # ----------------------------- Flows ---------------------------------------
+@flow(name="pull")
+def flow_pull():
+    """Flow: retrieve the latest code from Git."""
+    git_pull()
+
+
 @flow(name="install")
 def flow_install():
     """Flow: install dependencies."""
@@ -191,6 +203,7 @@ def flow_clean():
 @flow(name="all")
 def flow_all():
     """Flow: the complete pipeline, in order."""
+    git_pull()
     install_dependencies()
     code_formatting()
     code_quality()
@@ -204,6 +217,7 @@ def flow_all():
 
 FLOWS = {
     "all": flow_all,
+    "pull": flow_pull,
     "install": flow_install,
     "quality": flow_quality,
     "test": flow_test,
